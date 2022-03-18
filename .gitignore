@@ -1,0 +1,16 @@
+# Secrets
+.twitter_keys.yaml
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+venv/
+
+# Editors
+*.swp
+
+# macOS
+.DS_Store
