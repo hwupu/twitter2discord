@@ -25,14 +25,21 @@ def parse():
     
     for tweet in tweets:
         t = tweet
+        text = t['text']
+
         if 'referenced_tweets' in tweet:
             key = tweet['referenced_tweets'][0]['id']
             t = referrals[key]
     
-        text = t['text']
         attachments = [media[m] for m in t['attachments']['media_keys']]
         user = users[t['author_id']]
-        print(text, user, attachments)
+
+        print('username', '{} (@{})'.format(user['name'], user['username']))
+        print('avatar_url', user['profile_image_url'])
+        print('content', text)
+        for a in attachments:
+            print('embeds.image.url', a['url'])
+        print('')
 
 
 def post():
