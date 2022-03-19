@@ -18,6 +18,9 @@ from sqlite3 import Error
 # Database connection
 conn = None
 
+# Webhook url
+webhook_url = None
+
 def parse():
     """ Prepare the data to post """
     source = sys.stdin.readline()
@@ -25,7 +28,7 @@ def parse():
     
     tweets = source['data']
     users = {user['id']: user for user in source['includes']['users']}
-    media = {medium['media_key']: medium for medium in source['includes']['media']}
+    media = {medium['media_key']: medium for medium in source['includes']['media'] if medium['type'] == 'photo'}
     referrals = {tweet['id']: tweet for tweet in source['includes']['tweets']}
 
     for tweet in tweets:
@@ -40,7 +43,11 @@ def parse():
             print('Tweet has been posted before: {}'.format(t['id']))
             continue
         else:
-            attachments = [media[m] for m in t['attachments']['media_keys']]
+            attachments = [media[m] for m in t['attachments']['media_keys'] if m in media]
+            if len(attachments) == 0:
+                print('Tweet has no photo: {}'.format(t['id']))
+                continue
+
             user = users[t['author_id']]
             
             print('')
@@ -63,9 +70,7 @@ def parse():
 
 def post(payload):
     """ POST to Discord webhook """
-    url = ''
-    
-    result = requests.post(url, json=payload)
+    result = requests.post(webhook_url, json=payload)
     if 200 <= result.status_code < 300:
         print(f"Webhook sent {result.status_code}")
     else:
@@ -106,8 +111,28 @@ def close_databse():
         conn.close()
 
 
+def load_config():
+    """ Load configurations """
+    try:
+        global webhook_url
+        f = open('config.json', 'r')
+        config = json.load(f)
+        if 'webhook_url' in config:
+            webhook_url = config['webhook_url']
+        else:
+            print('No webhook url found.')
+            exit(-1)
+    except IOError as e:
+        print('Configuration can not be loaded.')
+        raise e
+    finally:
+        if f:
+            f.close()
+
+
 def main():
     """ Main entry point of the app """
+    load_config()
     connect_database()
     parse()
     close_databse()
