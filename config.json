@@ -1,0 +1,27 @@
+{
+  "search_tweets_v2": {
+    "endpoint": "https://api.twitter.com/2/tweets/search/recent",
+    "consumer_key": "",
+    "consumer_secret": "",
+    "bearer_token": ""
+  },
+  "search_rules":{
+    "base-query": "-is:retweet has:media"
+  },
+  "search_params": {
+    "max-tweets": 10,
+    "media-fields": "url",
+    "tweet-fields": "id,text,attachments",
+    "user-fields": "name,username,profile_image_url",
+    "expansions": "referenced_tweets.id.author_id,attachments.media_keys"
+  },
+  "output_params": {
+    "save_file": false
+  },
+  "scout": {
+    "webhook_url": "",
+    "twitter-ids": [
+      ""
+    ]
+  }
+}

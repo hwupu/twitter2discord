@@ -1,7 +1,6 @@
 # Secrets
 .twitter_keys.yaml
 *.sqlite3
-config.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
