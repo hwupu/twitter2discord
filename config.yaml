@@ -1,10 +1,11 @@
-#search_rules:
-#    start-time: 2020-01-06
-#    end-time: 2020-01-10
-#    query: snow colorado -is:retweet has:media
+search_tweets_v2:
+  bearer_token: XXXXX
+  consumer_key: XXXXX
+  consumer_secret: XXXXX
+  endpoint: https://api.twitter.com/2/tweets/search/recent
 
 search_params:
-    max-tweets: 10
+    max-tweets: 20
     media-fields: url,alt_text
     tweet-fields: id,text,attachments
     user-fields: name,username,profile_image_url,url

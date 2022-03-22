@@ -1,12 +1,15 @@
+import os
 import json
+import yaml
 import sqlite3
 
-def get_config():
+def get_watchlist():
     """ Load configurations """
     f = None
     try:
-        f = open('config.json', 'r')
-        return json.load(f)
+        f = open('watchlist.json', 'r')
+        j = json.load(f)
+        return (j['watchlist'], j['webhook_url'])
     except FileNotFoundError as e:
         print('\033[1;31mConfiguration not found.\033[m')
         raise e
