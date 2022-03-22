@@ -19,11 +19,14 @@ def parse(raw_json):
     
     tweets = source['data']
     users = {user['id']: user for user in source['includes']['users']}
-    media = {medium['media_key']: medium for medium in source['includes']['media'] if medium['type'] == 'photo'}
+    if 'media' in source['includes']:
+        media = {medium['media_key']: medium for medium in source['includes']['media'] if medium['type'] == 'photo'}
+    else:
+        media = {}
     if 'tweets' in source['includes']:
         referrals = {tweet['id']: tweet for tweet in source['includes']['tweets']}
     else:
-        referrals = None
+        referrals = {}
 
     for tweet in tweets:
         t = tweet
