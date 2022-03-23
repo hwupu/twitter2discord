@@ -12,9 +12,6 @@ logger = logging.getLogger()
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
 #logger.setLevel(logging.DEBUG)
 
-# Database connection
-conn = None
-
 def load_watchlist() -> list:
     """ Try to read watchlist json and return as list of dict """
     try:
@@ -41,7 +38,7 @@ def get_prop(dictionary: dict, key: str) -> str:
         exit(1)
 
 
-def run():
+def main():
     """ Load watchlist and call relevant parser """
     watchlists = load_watchlist()
 
@@ -51,7 +48,8 @@ def run():
         source = get_prop(watchlist, "from")
         if  source == "twitter":
             logger.debug("Fetch from Twitter")
-            tweets = fetch_tweets.fetch()
+            ww = get_prop(watchlist, "watchlist")
+            tweets = fetch_tweets.fetch(ww)
         else:
             logger.warning("Source platform is not supported.")
 
@@ -62,22 +60,9 @@ def run():
         destination = get_prop(watchlist, "to")
         if destination == "discord":
             logger.debug("Post to Discord")
-            post_discord.post(get_prop(watchlist, "webhook"))
+            webhook = get_prop(watchlist, "webhook")
+            post_discord.post(webhook)
         else:
             logger.warning("Destination platform is not supported.")
-
-
-def main():
-    """ Try to catch interupts """
-    try:
-        global conn
-        conn = database.connect()
-        run()
-    except KeyboardInterrupt:
-        print('\033[1;30mKeyboardInterrupt\033[m')
-    except EOFError:
-        print('\033[1;30mEOFError\033[m')
-    finally:
-        database.close(conn)
 
 
