@@ -51,18 +51,24 @@ def main():
             ww = get_prop(watchlist, "watchlist")
             tweets = fetch_tweets.fetch(ww)
         else:
-            logger.warning("Source platform is not supported.")
+            logger.warning("{} is not supported as source platform.".format(source))
 
-        if not tweets:
+        if tweets:
+            tweets = [tweet for tweet in tweets if not database.hasTweetBeenPosted(tweet['id'])]
+        
+        if not tweets or len(tweets) == 0:
             logger.debug("No tweets found.")
             continue
+
+        for tweet in tweets:
+            database.storeTweetToDatabse(tweet["id"])
 
         destination = get_prop(watchlist, "to")
         if destination == "discord":
             logger.debug("Post to Discord")
             webhook = get_prop(watchlist, "webhook")
-            post_discord.post(webhook)
+            post_discord.post(tweets, webhook)
         else:
-            logger.warning("Destination platform is not supported.")
+            logger.warning("{} is not supported as destination platform.".format(destination))
 
 

@@ -1,6 +1,12 @@
 # Fetch tweets
 from subprocess import check_output
 import json
+from searchtweets import (ResultStream,
+                          load_credentials,
+                          merge_dicts,
+                          read_config,
+                          write_result_stream,
+                          gen_params_from_config)
 
 def groupWatchlist(watchlist: list) -> list:
     """ Due to query limit of 512 char, we seperate the list to multiple requests """
@@ -30,17 +36,31 @@ def fetch(watchlist: list) -> list:
     result = []
 
     for w in groupWatchlist(watchlist):
-        query = prepareQuery(w)
-        out = check_output(["python",
-                            "scout/search_tweets.py",
-                            "--credential-file",
-                            "config.yaml",
-                            "--config-file",
-                            "config.yaml",
-                            "--query",
-                            "({}) has:images".format(query)])
-        if out:
-            result.append(json.loads(out))
+        configfile_dict = read_config("config.yaml")
 
-    print(result)
+        creds_dict = load_credentials(filename="config.yaml",
+                                      yaml_key="search_tweets_v2",
+                                      env_overwrite=False)
+
+        query = prepareQuery(w)
+
+        args_dict = {
+            "query": "({}) has:images".format(query),
+            "output_format": "a"
+        }
+
+        dict_filter = lambda x: {k: v for k, v in x.items() if v is not None}
+
+        config_dict = merge_dicts(dict_filter(configfile_dict),
+                                  dict_filter(creds_dict),
+                                  dict_filter(args_dict))
+
+        stream_params = gen_params_from_config(config_dict)
+
+        rs = ResultStream(tweetify=False, **stream_params)
+
+        result += list(rs.stream())
+
     return result if len(result) != 0 else None
+
+
