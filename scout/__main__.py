@@ -43,15 +43,15 @@ def main():
 
 args_dict = vars(parse_cmd_args().parse_args())
 
-if not args_dict.get("repeat"):
-    main()
-    exit()
-
 logger = logging.getLogger()
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
 
 if args_dict.get("debug"):
     logger.setLevel(logging.DEBUG)
+
+if not args_dict.get("repeat"):
+    main()
+    exit()
 
 
 import schedule
