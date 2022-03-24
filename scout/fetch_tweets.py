@@ -1,6 +1,5 @@
 # Fetch tweets
-from subprocess import check_output
-import json
+import time
 from searchtweets import (ResultStream,
                           load_credentials,
                           merge_dicts,
@@ -60,6 +59,8 @@ def fetch(watchlist: list) -> list:
         rs = ResultStream(tweetify=False, **stream_params)
 
         result += list(rs.stream())
+
+        time.sleep(1)
 
     return result if len(result) != 0 else None
 

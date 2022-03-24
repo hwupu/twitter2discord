@@ -1,8 +1,16 @@
 # Post tweets to Discord
 import logging
 import requests
+import time
 
 logger = logging.getLogger()
+
+def hasImageUrl(media: list) -> bool:
+    for media in t["attachments"]["media"]:
+        if "url" not in media:
+            return False
+    return True
+
 
 def post(tweets: list, webhook: str):
     """ POST to Discord webhook """
@@ -10,14 +18,9 @@ def post(tweets: list, webhook: str):
 
         t = tweet["referenced_tweets"][0] if "referenced_tweets" in tweet else tweet
 
-        if "attachments" not in t:
+        if "attachments" not in t or not hasImageUrl(t["attachments"]["media"]):
             logger.info("Tweet contain no image: {}".format(t["id"]))
             continue
-
-        for media in t["attachments"]["media"]:
-            if "url" not in media:
-                logger.info("Tweet contain no image: {}".format(t["id"]))
-                continue
 
         payload = {
             "username": "{} (@{})".format(t["author"]["name"], t["author"]["username"]),
@@ -33,3 +36,5 @@ def post(tweets: list, webhook: str):
         else:
             logger.warning("{}:Fail to posted tweet:{}".format(result.status_code, tweet["id"]))
             logger.warning("Responce:{}".format(result.json()))
+
+        time.sleep(1)

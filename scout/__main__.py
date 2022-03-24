@@ -48,6 +48,8 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
 
 if args_dict.get("debug"):
     logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 if not args_dict.get("repeat"):
     main()
