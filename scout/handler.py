@@ -1,138 +1,74 @@
-import schedule
-import signal
-import time
-from subprocess import check_output
-import requests
+# Load watchlist and call relevant parser.
+import os
+import logging
 import json
+from json.decoder import JSONDecodeError
 
-from . import initializer
+from . import database
+from . import fetch_tweets
+from . import post_discord
 
-alive = True
-watchlist = None
-webhook_url = None
-conn = None
-query = None
+logger = logging.getLogger()
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
+#logger.setLevel(logging.DEBUG)
 
-def parse(raw_json):
-    """ Prepare the data to post """
-    source = json.loads(raw_json)
-    
-    tweets = source['data']
-    users = {user['id']: user for user in source['includes']['users']}
-    if 'media' in source['includes']:
-        media = {medium['media_key']: medium for medium in source['includes']['media'] if medium['type'] == 'photo'}
-    else:
-        media = {}
-    if 'tweets' in source['includes']:
-        referrals = {tweet['id']: tweet for tweet in source['includes']['tweets']}
-    else:
-        referrals = {}
-
-    for tweet in tweets:
-        t = tweet
-        text = t['text']
-
-        if 'referenced_tweets' in tweet:
-            key = tweet['referenced_tweets'][0]['id']
-            t = referrals[key]
-
-        if hasTweetBeenPosted(t['id']):
-            print('Tweet has been posted before: {}'.format(t['id']))
-            continue
-        else:
-            attachments = [media[m] for m in t['attachments']['media_keys'] if m in media]
-            if len(attachments) == 0:
-                print('Tweet has no photo: {}'.format(t['id']))
-                continue
-
-            user = users[t['author_id']]
-            
-            #print('')
-            print('Posting tweet: {}'.format(t['id']))
-            #print('username', '{} (@{})'.format(user['name'], user['username']))
-            #print('avatar_url', user['profile_image_url'])
-            #print('content', text)
-            #for a in attachments:
-            #    print('embeds.image.url', a['url'])
-
-            payload = {
-                'username': '{} (@{})'.format(user['name'], user['username']),
-                'avatar_url': user['profile_image_url'],
-                'content': text,
-                'embeds': [ {'image': {'url': a['url']}} for a in attachments],
-            } 
-            post(payload)
-            storeTweetToDatabse(t['id'])
+def load_watchlist() -> list:
+    """ Try to read watchlist json and return as list of dict """
+    try:
+        f = open("watchlist.json", "r")
+        j = json.load(f)
+        return j if type(j) is list else [j]
+    except JSONDecodeError as e:
+        logger.critical("\033[1;31mError parsing watchlist.json.\033[m")
+        raise e
+    except FileNotFoundError:
+        logger.critical("\033[1;31mUnable to find watchlist.json.\033[m")
+        exit(1)
+    finally:
+        if f:
+            f.close()
 
 
-def post(payload):
-    """ POST to Discord webhook """
-    result = requests.post(webhook_url, json=payload)
-    if 200 <= result.status_code < 300:
-        print(f"Webhook sent {result.status_code}")
-    else:
-        print(f"Not sent with {result.status_code}, response:\n{result.json()}")
-
-
-def hasTweetBeenPosted(tweet_id: int):
-    """ Check if tweet_id exist in database, return True if exist """
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM posted_tweets WHERE id = ?", (tweet_id,))
-    data=cur.fetchall()
-    return len(data) != 0
-
-
-def storeTweetToDatabse(tweet_id: int):
-    """ Save tweet_id into database, except record doesn't exist """
-    cur = conn.cursor()
-    cur.execute("INSERT INTO  posted_tweets (id) VALUES (?)", (tweet_id,))
-    conn.commit()
-
-def job1():
-    out = check_output(["python",
-                        "scout/search_tweets.py",
-                        "--credential-file",
-                        "config.yaml",
-                        "--config-file",
-                        "config.yaml",
-                        "--query",
-                        "({}) -is:reply has:media".format(query),
-                        "--start-time",
-                        "16m"])
-
-    if out:
-        parse(out)
-    else:
-        print('No new tweet found.')
-
-
-def stop(self, *args):
-    initializer.close_databse(conn)
-    schedule.clear()
-    
-    global alive
-    alive = False
+def get_prop(dictionary: dict, key: str) -> str:
+    """ Try to catch KeyError if there are any mistake in watchlist """
+    try:
+        return dictionary[key]
+    except KeyError:
+        logger.critical("\033[1;31mUnable to locate \"{}\" in watchlist.json.\033[m".format(key))
+        exit(1)
 
 
 def main():
-    global watchlist
-    global webhook_url
-    global conn
-    global query
-    
-    (watchlist, webhook_url) = initializer.get_watchlist()
-    conn = initializer.connect_database()
-    query = ' OR '.join(['from:{}'.format(w) for w in watchlist])
-    
-    signal.signal(signal.SIGINT, stop)
-    signal.signal(signal.SIGTERM, stop)
+    """ Load watchlist and call relevant parser """
+    watchlists = load_watchlist()
 
-    print('Start polling Twitters from watchlist every 15 minutes...')
-    schedule.every(15).minutes.do(job1)
-    schedule.run_all()
+    for watchlist in watchlists:
+        tweets = None
 
-    while alive:
-        schedule.run_pending()
-        time.sleep(1)
+        source = get_prop(watchlist, "from")
+        if  source == "twitter":
+            logger.debug("Fetch from Twitter")
+            ww = get_prop(watchlist, "watchlist")
+            tweets = fetch_tweets.fetch(ww)
+        else:
+            logger.warning("{} is not supported as source platform.".format(source))
+
+        if tweets:
+            tweets = [tweet for tweet in tweets if not database.hasTweetBeenPosted(tweet['id'])]
+        
+        if not tweets or len(tweets) == 0:
+            logger.debug("No tweets found.")
+            continue
+
+        for tweet in tweets:
+            database.storeTweetToDatabse(tweet["id"])
+
+        destination = get_prop(watchlist, "to")
+        if destination == "discord":
+            logger.debug("Post to Discord")
+            webhook = get_prop(watchlist, "webhook")
+            post_discord.post(tweets, webhook)
+        else:
+            logger.warning("{} is not supported as destination platform.".format(destination))
 
 

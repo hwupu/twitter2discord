@@ -2,7 +2,7 @@
 
 still messy...
 
-But, it can pull tweets every 15 minutes, and post to Discord via webhook. It will look at the Twitter IDs in `watchlist`, and grab the only the tweets that has image.
+But, it can pull tweets and post to Discord via webhook. It will look at the Twitter IDs in `watchlist`, and grab the only the tweets that has image.
 
 ## Setup
 
