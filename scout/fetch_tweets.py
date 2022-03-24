@@ -44,7 +44,7 @@ def fetch(watchlist: list) -> list:
         query = prepareQuery(w)
 
         args_dict = {
-            "query": "({}) has:images".format(query),
+            "query": "({}) -is:reply has:images".format(query),
             "output_format": "a"
         }
 
