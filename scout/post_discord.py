@@ -10,6 +10,15 @@ def post(tweets: list, webhook: str):
 
         t = tweet["referenced_tweets"][0] if "referenced_tweets" in tweet else tweet
 
+        if "attachments" not in t:
+            logger.info("Tweet contain no image: {}".format(t["id"]))
+            continue
+
+        for media in t["attachments"]["media"]:
+            if "url" not in media:
+                logger.info("Tweet contain no image: {}".format(t["id"]))
+                continue
+
         payload = {
             "username": "{} (@{})".format(t["author"]["name"], t["author"]["username"]),
             "avatar_url": t["author"]["profile_image_url"],
