@@ -4,12 +4,14 @@ search_tweets_v2:
   consumer_secret: XXXXX
   endpoint: https://api.twitter.com/2/tweets/search/recent
 
+search_rules:
+  # If you are using cron to periodically execute this script,
+  # you many want to limit the query for specific interval.
+  start-time: 16m
+
 search_params:
     max-tweets: 20
     media-fields: url,alt_text
     tweet-fields: id,text,attachments
-    user-fields: name,username,profile_image_url,url
+    user-fields: name,username,profile_image_url
     expansions: referenced_tweets.id.author_id,attachments.media_keys
-
-output_params:
-    save_file: False

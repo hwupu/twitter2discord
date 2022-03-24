@@ -1,6 +1,10 @@
-{
-  "webhook_url": "https://to/discord/webhook/url",
-  "watchlist": [
-    "twitter_id"
-  ]
-}
+[
+  {
+    "from": "twitter",
+    "to": "discord",
+    "webhook": "https://to/discord/webhook",
+    "watchlist": [
+      "twitter_id"
+    ]
+  }
+]
