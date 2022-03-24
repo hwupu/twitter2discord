@@ -61,7 +61,6 @@ import time
 alive = True
 
 def stop(self, *args):
-    initializer.close_databse(conn)
     schedule.clear()
 
     global alive
