@@ -1,5 +1,4 @@
 # Load watchlist and call relevant parser.
-import os
 import logging
 import json
 from json.decoder import JSONDecodeError
@@ -9,8 +8,6 @@ from . import fetch_tweets
 from . import post_discord
 
 logger = logging.getLogger()
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
-#logger.setLevel(logging.DEBUG)
 
 def load_watchlist() -> list:
     """ Try to read watchlist json and return as list of dict """
