@@ -61,7 +61,7 @@ def main():
         for tweet in tweets:
             if not database.hasTweetBeenPosted(tweet["id"]):
                 database.storeTweetToDatabse(tweet["id"])
-                filtered_tweets += tweet
+                filtered_tweets.append(tweet)
         
         if len(filtered_tweets) == 0:
             logger.info("No new tweet to post.")
