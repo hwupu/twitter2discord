@@ -6,8 +6,8 @@ import time
 logger = logging.getLogger()
 
 def hasImageUrl(media: list) -> bool:
-    for media in t["attachments"]["media"]:
-        if "url" not in media:
+    for m in media:
+        if "url" not in m:
             return False
     return True
 
