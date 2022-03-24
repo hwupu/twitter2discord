@@ -39,7 +39,9 @@ def main():
     """ Load watchlist and call relevant parser """
     watchlists = load_watchlist()
 
-    for watchlist in watchlists:
+    for count, watchlist in enumerate(watchlists):
+        logger.info("Processing watchlist No. {}".format(count))
+
         tweets = None
 
         source = get_prop(watchlist, "from")
@@ -50,15 +52,22 @@ def main():
         else:
             logger.warning("{} is not supported as source platform.".format(source))
 
-        if tweets:
-            tweets = [tweet for tweet in tweets if not database.hasTweetBeenPosted(tweet['id'])]
-        
-        if not tweets or len(tweets) == 0:
-            logger.debug("No tweets found.")
+        filtered_tweets = []
+
+        if not tweets:
+            logger.info("No tweets found.")
             continue
 
         for tweet in tweets:
-            database.storeTweetToDatabse(tweet["id"])
+            if not database.hasTweetBeenPosted(tweet["id"]):
+                database.storeTweetToDatabse(tweet["id"])
+                filtered_tweets += tweet
+        
+        if len(filtered_tweets) == 0:
+            logger.info("No new tweet to post.")
+            continue
+
+        tweets = filtered_tweets
 
         destination = get_prop(watchlist, "to")
         if destination == "discord":
