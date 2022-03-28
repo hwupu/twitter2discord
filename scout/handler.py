@@ -52,28 +52,27 @@ def main():
         else:
             logger.warning("{} is not supported as source platform.".format(source))
 
-        filtered_tweets = []
-
         if not tweets:
             logger.info("No tweets found.")
             continue
 
+        filtered_tweets = []
+
         for tweet in tweets:
-            if not database.hasTweetBeenPosted(tweet["id"]):
-                database.storeTweetToDatabse(tweet["id"])
+            tweet_id = tweet["referenced_tweets"][0]["id"] if "referenced_tweets" in tweet else tweet["id"]
+            if not database.hasTweetBeenPosted(tweet_id):
+                database.storeTweetToDatabse(tweet_id)
                 filtered_tweets.append(tweet)
         
         if len(filtered_tweets) == 0:
             logger.info("No new tweet to post.")
             continue
 
-        tweets = filtered_tweets
-
         destination = get_prop(watchlist, "to")
         if destination == "discord":
             logger.debug("Post to Discord")
             webhook = get_prop(watchlist, "webhook")
-            post_discord.post(tweets, webhook)
+            post_discord.post(filtered_tweets, webhook)
         else:
             logger.warning("{} is not supported as destination platform.".format(destination))
 
