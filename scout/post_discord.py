@@ -26,8 +26,8 @@ def post(tweets: list, webhook: str):
         payload = {
             "username": "{} (@{})".format(t["author"]["name"], t["author"]["username"]),
             "avatar_url": t["author"]["profile_image_url"],
-            "content": t["text"],
-            "embeds": [{"image": {"url": a["url"]}} for a in t["attachments"]["media"]].append({"description": source_author}),
+            "content": t["text"] + "<br/>" + source_author,
+            "embeds": [{"image": {"url": a["url"]}} for a in t["attachments"]["media"]],
         } 
 
         result = requests.post(webhook, json=payload)
