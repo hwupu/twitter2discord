@@ -16,6 +16,7 @@ def post(tweets: list, webhook: str):
     """ POST to Discord webhook """
     for tweet in tweets:
 
+        source_author = "[debug] source: @{}".format(tweet["author"]["username"])
         t = tweet["referenced_tweets"][0] if "referenced_tweets" in tweet else tweet
 
         if "attachments" not in t or not hasImageUrl(t["attachments"]["media"]):
@@ -26,7 +27,10 @@ def post(tweets: list, webhook: str):
             "username": "{} (@{})".format(t["author"]["name"], t["author"]["username"]),
             "avatar_url": t["author"]["profile_image_url"],
             "content": t["text"],
-            "embeds": [ {"image": {"url": a["url"]}} for a in t["attachments"]["media"]],
+            "embeds": [
+                {"description": source_author},
+                {"image": {"url": a["url"]}} for a in t["attachments"]["media"],
+            ],
         } 
 
         result = requests.post(webhook, json=payload)
